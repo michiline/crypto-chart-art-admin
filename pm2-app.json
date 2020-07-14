@@ -3,7 +3,7 @@
         {
             "name": "crypto-chart-art-admin",
             "script": "npm",
-            "args" : "npm start"
+            "args" : "run production-start"
         }
     ]
 }

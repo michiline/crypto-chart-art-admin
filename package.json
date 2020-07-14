@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "next -p 3001",
     "build": "next build",
-    "start": "next start -p 3001"
+    "start": "next start -p 3001",
+    "production-start": "npm run build && npm run start"
   },
   "author": "equidistant",
   "license": "ISC",
