@@ -1,11 +1,16 @@
 import { useState } from 'react'
 import styled from 'styled-components'
 import { ProtectRoute } from '../../contexts/auth'
+import parseText from './parseText'
+import buildHtml from './buildHtml'
+import { createPost } from '../../common'
 
-const HomePage = () => {
+const PostPage = () => {
+  const [url, setUrl] = useState('')
   const [post, setPost] = useState('')
   const [preview, setPreview] = useState('')
-  const buildPreview = (post) => {
+  const [message, setMessage] = useState('')
+  const handlePreview = () => {
     try {
       const tags = parseText(post.trim().replace(/(\r\n|\n|\r)/gm,''))
       const html = buildHtml(tags)
@@ -13,120 +18,155 @@ const HomePage = () => {
         return
       }
       setPreview(
-        <div>{html}</div>
+        <Preview>{html}</Preview>
       )
+      setMessage('')
+    } catch (err) {
+      console.log(err)
+      setMessage(err.message)
+    }
+  }
+  const handleCreate = () => {
+    try {
+      if (url) {
+        const nodes = parseText(post.trim().replace(/(\r\n|\n|\r)/gm,''))
+        createPost({
+          data: { url, nodes }, 
+          callback: (message) => {
+            setMessage(message)
+          },
+        })
+      }
     } catch (err) {
       console.log(err)
     }
   }
+  const closeTag = (e) => {
+    if (e.keyCode === 8) {
+      return
+    }
+    let text = e.target.value
+    if (text.length >= 4) {
+      const last4 = text.substr(text.length - 4)
+      switch (last4) {
+        case '<H1>':
+            setPost(`${text}</H1>`)
+            break     
+        default:
+          break
+      }      
+    }
+    if (text.length >= 5) {
+      const last5 = text.substr(text.length - 5)
+      switch (last5) {
+        case '<TXT>':
+            setPost(`${text}</TXT>`)
+            break
+        case '<IMG>':
+          setPost(`${text}</IMG>`)
+          break        
+        default:
+          break
+      }      
+    }
+    if (text.length >= 6) {
+      const last6 = text.substr(text.length - 6)
+      switch (last6) {
+        case '<LINK>':
+            setPost(`${text}</LINK>`)
+            break      
+        default:
+          break
+      }      
+    }
+  }
 	return (
     <RootContainer>
-        <PostInput type='text' onBlur={(e) => setPost(e.target.value)}/>
-        <PreviewButton onClick={() => buildPreview(post)}>Preview</PreviewButton>
-        {preview}
+        <H1>Create post</H1>
+        <UrlInput type='text' value={url} onChange={(e) => setUrl(e.target.value)}  placeholder='Enter short name for url'/>
+        <PostTextArea type='text' value={post} onChange={(e) => setPost(e.target.value)}  placeholder='Enter post text (with tags i.e. <TXT>, <IMG> etc.)' onKeyUp={closeTag}/>
+        <ActionButton onClick={handlePreview}>Preview</ActionButton>
+        <ActionButton onClick={handleCreate}>Create</ActionButton>
+        {message && <MessageHeader>{message}</MessageHeader>}
+        <Example>
+          <ExampleHeader>{'Example of post text: '}</ExampleHeader>
+          <ExampleRow>{'<H1>$NEBL short term setup</H1>'}</ExampleRow>
+          <ExampleRow>{'<TXT>Hi traders!</TXT>'}</ExampleRow>
+          <ExampleRow>{'<TXT>Showing you my $NEBL short term setup, chart looks ready for breakout try to me.</TXT>'}</ExampleRow>
+          <ExampleRow>{'<IMG>https://www.tradingview.com/x/mPjdT0sd/</IMG>'}</ExampleRow>
+          <ExampleRow>{`<TXT>As you can see on the chart, with this setup I am for some smaller % gains, 
+            but still leaving room for a bigger 2x gain incase the chart and orderbook shows extreme bulishness.</TXT>`}
+          </ExampleRow>
+        </Example>
+        <Preview>
+          <PreviewHeader>
+            Preview:
+          </PreviewHeader>
+          {preview}
+        </Preview>
+
     </RootContainer>
   )
 }
 
-
-
-const STATE = {
-	OPEN_TAG: 'OPEN_TAG',
-	CHECK_TAG: 'CHECK_TAG',
-	TXT: 'TXT'
-}
-
-const TAGS = ['H1', 'H2', 'TXT', 'IMG', 'LINK']
-
-const parseText = (text) => {
-	let currentState = STATE.OPEN_TAG
-	let currentTag = ''
-	let tags = []
-	while (text.length > 0) {
-		switch (currentState) {
-			case STATE.OPEN_TAG:
-				if (text.charAt(0) !== '<') {
-					throw new Error('Invalid opening tag.')
-				}
-				currentState = STATE.CHECK_TAG
-				text = text.substr(1)
-				break
-			case STATE.CHECK_TAG: 
-				currentTag = text.substr(0, text.indexOf('>'))
-				if (!TAGS.includes(currentTag)) {
-					throw new Error('Invalid tag name.')
-				}
-				if (text.length === 0) {
-					throw new Error('Invalid opening tag.')
-				}
-				text = text.substr(text.indexOf('>') + 1)
-				currentState = STATE.TAG
-				break
-			case STATE.TAG:
-				if (text.indexOf(`</${currentTag}>`) === -1) {
-					throw new Error(`Invalid closing ${currentTag} tag.`)
-				}
-				const data = text.substr(0, text.indexOf(`</${currentTag}>`))
-				tags.push({
-					name: currentTag,
-					data
-				})
-				text = text.substr(text.indexOf(`</${currentTag}>`) + currentTag.length + 3)
-				currentState = STATE.OPEN_TAG
-				break
-			default: 
-				break
-		}
-	}
-	if (currentState !== STATE.OPEN_TAG) {
-		throw new Error('Invalid tag structure.')
-	}
-	return tags
-}
-
-const buildHtml = (tags) => {
-  return tags.map(({ name, data }, index) => {
-    switch(name) {
-      case 'H1': {
-        return (
-          <h1 key={index}>{data}</h1>
-        )
-      }
-      case 'TXT':
-        return (
-          <p key={index}>{data}</p>
-        )
-      case 'IMG': 
-        return (
-          <img src={data} key={index}/>
-        )
-      default: 
-        return (
-          <div key={index}>{data}</div>
-        )
-    }
-  })
-}
-  
-
 const RootContainer = styled.div`
   width: 100%;
+  max-width: 1250px;
+  padding: 50px;
 `
 
-const PostInput = styled.textarea`
+const H1 = styled.h1`
+  
+`
+
+const UrlInput = styled.input`
+  width: 200px;
+  height: 25px;
+`
+
+const PostTextArea = styled.textarea`
   width: 100%;
   height: 250px;
+  white-space: pre-wrap;
 `
 
-const PreviewButton = styled.button`
+const ActionButton = styled.button`
   width: 100px;
   height: 25px;
 `
 
-const Preview = styled.div`
-  width: 100%;
-  height: min-content;
+const MessageHeader = styled.h3`
+  width: max-content;
 `
 
-export default ProtectRoute(HomePage)
+const Preview = styled.div`
+  margin-top: 50px;
+  width: 100%;
+  max-width: 1000px;
+  height: min-content;
+  display: flex;
+  flex-direction: column;
+`
+
+const PreviewHeader = styled.h3`
+
+`
+
+const Example = styled.div`
+  margin-top: 50px;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+`
+const ExampleHeader = styled.h3`
+  margin-bottom: 25px;
+`
+
+const ExampleRow = styled.div`
+  width: 500px;
+`
+
+export default ProtectRoute(PostPage)
   

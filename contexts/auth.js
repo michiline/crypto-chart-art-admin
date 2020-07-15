@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react'
 import Router, { useRouter } from 'next/router'
-import { loginRequest, checkSessionRequest, logoutRequest } from '../common'
+import { loginRequest, checkSessionRequest, logoutRequest, registerRequest } from '../common'
 import Cookies from 'js-cookie'
 
 const AuthContext = createContext({
@@ -11,7 +11,6 @@ const AuthContext = createContext({
 
 const useAuth = () => {
 	const context = useContext(AuthContext)
-
 	return context
 }
 
@@ -22,24 +21,54 @@ export const AuthProvider = ({ children }) => {
 
 	useEffect(() => {
 		const initializeAuth = async () => {
-			const data = await checkSessionRequest() 
-			console.log(data)
-			if (data.message && data.message === 'UNAUTHORIZED') {
+			try {
+				const response = await checkSessionRequest() 
+				if (response.ok) {
+					setAuthenticated(true)
+					setLoading(false)
+				} else {
+					setAuthenticated(false)
+					setLoading(false)
+				}
+			} catch (err) {
+				console.log(err)
 				setAuthenticated(false)
 				setLoading(false)
-			} else {
-				setAuthenticated(true)
-				setLoading(false)
 			}
+
+			// if (data.message && data.message === 'UNAUTHORIZED') {
+			// 	setAuthenticated(false)
+			// 	setLoading(false)
+			// } else {
+			// 	setAuthenticated(true)
+			// 	setLoading(false)
+			// }
 		}
 		initializeAuth()
 	}, [])
 
 	const login = async ({ username, password }) => {
-		await loginRequest({ username, password }) 
-		setAuthenticated(true)
-		setLoading(false)
-		Router.push('/')
+		const response = await loginRequest({ username, password }) 
+		if (response.ok) {
+			setAuthenticated(true)
+			setLoading(false)
+			Router.push('/')
+		} else {
+			setAuthenticated(false)
+			setLoading(false)
+		}
+	}
+
+	const register = async ({ username, password }) => {
+		const response = await registerRequest({ username, password }) 
+		if (response.ok) {
+			setAuthenticated(true)
+			setLoading(false)
+			Router.push('/')
+		} else {
+			setAuthenticated(false)
+			setLoading(false)
+		}
 	}
 
 	const logout = async () => {
@@ -50,7 +79,7 @@ export const AuthProvider = ({ children }) => {
 	}
 
 	return (
-		<AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>
+		<AuthContext.Provider value={{ isAuthenticated, isLoading, login, register, logout }}>
 			{children}
 		</AuthContext.Provider>
 	)
@@ -61,21 +90,17 @@ export const ProtectRoute = (Component) => {
 		const { isLoading, isAuthenticated } = useAuth()
 		const router = useRouter()
 
-		useEffect(() => {
-			console.log(`isLoading: ${isLoading}`)
-			console.log(`isAuthenticated: ${isAuthenticated}`)
-			if (!isAuthenticated && !isLoading) {
-				router.push('/login')
-			}
-		}, [isLoading, isAuthenticated])
-		// console.log(isLoading)
-		// console.log(isAuthenticated)
-		// if (!isAuthenticated && !isLoading) {
-		// 	router.push('/login')
-		// }
-		// if (isLoading) {
-		// 	return <div>Loading...</div>
-		// }
+		// useEffect(() => {
+		// 	if (!isAuthenticated && !isLoading) {
+		// 		router.push('/login')
+		// 	}
+		// }, [isLoading, isAuthenticated])
+		if (!isAuthenticated && !isLoading) {
+			router.push('/login')
+		}
+		if (isLoading) {
+			return <div>Loading...</div>
+		}
 		return (<Component {...arguments} />)
 	}
 }
@@ -85,17 +110,17 @@ export const RedirectRoute = (Component) => {
 		const { isLoading, isAuthenticated } = useAuth()
 		const router = useRouter()
 
-		useEffect(() => {
-			if (isAuthenticated && !isLoading) {
-				router.push('/')
-			}
-		}, [isLoading, isAuthenticated])
-		// if (isAuthenticated && !isLoading) {
-		// 	router.push('/')
-		// }
-		// if (isLoading) {
-		// 	return <div>Loading...</div>
-		// }
+		// useEffect(() => {
+		// 	if (isAuthenticated && !isLoading) {
+		// 		router.push('/')
+		// 	}
+		// }, [isLoading, isAuthenticated])
+		if (isAuthenticated && !isLoading) {
+			router.push('/')
+		}
+		if (isLoading) {
+			return <div>Loading...</div>
+		}
 		return (<Component {...arguments} />)
 	}
 }

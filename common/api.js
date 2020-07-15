@@ -24,6 +24,28 @@ export const logoutRequest = (data) => {
 	})
 }
 
+export const createPostRequest = (data) => {
+	return postRequest({
+		url: '/post',
+		data
+	})
+}
+
+export const createPost = async ({ data, callback }) => {
+	try {
+		const response = await createPostRequest(data)
+		if (response.ok) {
+			callback('Post created!')
+		} else {
+			callback('Error occurred!')
+			console.log(err)
+		}
+	} catch (err) {
+		callback('Error occurred!')
+		console.log(err)
+	}
+}
+
 const postRequest = async ({ url, data = {} }) => {
 	const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${url}`, {
 	  method: 'POST',
@@ -33,13 +55,13 @@ const postRequest = async ({ url, data = {} }) => {
 	  },
 	  body: JSON.stringify(data)
 	})
-	return response.json()
-  }
+	return response
+}
 
 export const getRequest = async ({ url }) => {
 	const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${url}`, {
 		method: 'GET',
 		credentials: 'include'
 	})
-	return response.json()
+	return response
 }

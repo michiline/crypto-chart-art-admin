@@ -1,11 +1,16 @@
 import { useState, useContext } from 'react'
 import { RedirectRoute } from '../../contexts/auth'
 import styled from 'styled-components'
+import useAuth from '../../contexts/auth'
 
 const RegisterPage = () => {
+	const { register } = useAuth()
 	const [username, setUsername] = useState('')
 	const [password, setPassword] = useState('')
 	const handleRegister = () => {
+		if (username && password) {
+			register({ username, password })
+		}
 	}
 	return (
     <RootContainer>

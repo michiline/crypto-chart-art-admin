@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import App from 'next/app'
+import GlobalStyle from '../style/global'
+
 import { AuthProvider } from '../contexts/auth'
 
 function MyApp({ Component, pageProps }) {
 	return (
 		<AuthProvider>
+			<GlobalStyle/>
 			<Component {...pageProps} />
 		</AuthProvider>
 

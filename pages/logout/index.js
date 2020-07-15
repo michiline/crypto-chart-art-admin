@@ -3,9 +3,11 @@ import styled from 'styled-components'
 import useAuth, { ProtectRoute } from '../../contexts/auth'
 
 const LogoutPage = () => {
-	const { logout } = useAuth()
+	const { isAuthenticated, logout } = useAuth()
 	useEffect(() => {
-		logout()
+		if (isAuthenticated) {
+			logout()
+		}
 	}, [])
 	return (
     <RootContainer>
