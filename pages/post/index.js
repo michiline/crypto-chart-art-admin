@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import styled from 'styled-components'
 import { ProtectRoute } from '../../contexts/auth'
-import parseText from './parseText'
-import buildHtml from './buildHtml'
-import { createPost } from '../../common'
+import { parseText, buildHtml, createPost } from '../../common'
 
 const PostPage = () => {
   const [url, setUrl] = useState('')
