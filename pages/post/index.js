@@ -4,13 +4,17 @@ import { ProtectRoute } from '../../contexts/auth'
 import { parseText, buildHtml, createPost } from '../../common'
 
 const PostPage = () => {
-  const [url, setUrl] = useState('')
-  const [post, setPost] = useState('')
+  const [title, setTitle] = useState('')
+  const [longTitle, setLongTitle] = useState()
+  const [description, setDescription] = useState('')
+  const [coverImg, setCoverImg] = useState('')
+  const [text, setText] = useState(`<TXT>Hello traders!</TXT><TXT>Today a setup for $IOST, it recently had some major news announcement so I expect hthis one to progress upwards in price in the comming future.</TXT><IMG>https://images.hive.blog/DQmZy4i25cccwSFQA6TbAzeZgpsomw3pdUeUEKSg8NrUiTX/nebl.png</IMG><TXT>Marked some support/resistance lines already with the purple lines on the weekly, now zooming into the daily chart on the more recent timeframe.</TXT><IMG>https://images.hive.blog/DQmTQk98wT6JS6ZpFvB78EGcsnfbsuCGCfXwsU6M7NqVrj9/iostdlines.png</IMG><TXT>Lets start from the bottom up. First on the list the 50 satoshi line, played a role as a major support line in late 19' and early 20', thereafter, for a short while, it acted as a hard resistance level which the price used to make a new all time low, right after making it, it broke the 50 satoshi line on the upside, possibly marking the start of an longer term uptrend.</TXT>`)
   const [preview, setPreview] = useState('')
   const [message, setMessage] = useState('')
+
   const handlePreview = () => {
     try {
-      const tags = parseText(post.trim().replace(/(\r\n|\n|\r)/gm,''))
+      const tags = parseText(text.trim().replace(/(\r\n|\n|\r)/gm,''))
       const html = buildHtml(tags)
       if (!html) {
         return
@@ -26,10 +30,10 @@ const PostPage = () => {
   }
   const handleCreate = () => {
     try {
-      if (url) {
-        const nodes = parseText(post.trim().replace(/(\r\n|\n|\r)/gm,''))
+      if (title && longTitle && description && coverImg) {
+        const nodes = parseText(text.trim().replace(/(\r\n|\n|\r)/gm,''))
         createPost({
-          data: { url, nodes }, 
+          data: { title, longTitle, description, coverImg, nodes }, 
           callback: (message) => {
             setMessage(message)
           },
@@ -48,7 +52,7 @@ const PostPage = () => {
       const last4 = text.substr(text.length - 4)
       switch (last4) {
         case '<H1>':
-            setPost(`${text}</H1>`)
+            setText(`${text}</H1>`)
             break     
         default:
           break
@@ -58,10 +62,10 @@ const PostPage = () => {
       const last5 = text.substr(text.length - 5)
       switch (last5) {
         case '<TXT>':
-            setPost(`${text}</TXT>`)
+            setText(`${text}</TXT>`)
             break
         case '<IMG>':
-          setPost(`${text}</IMG>`)
+          setText(`${text}</IMG>`)
           break        
         default:
           break
@@ -71,7 +75,7 @@ const PostPage = () => {
       const last6 = text.substr(text.length - 6)
       switch (last6) {
         case '<LINK>':
-            setPost(`${text}</LINK>`)
+            setText(`${text}</LINK>`)
             break      
         default:
           break
@@ -81,14 +85,16 @@ const PostPage = () => {
 	return (
     <RootContainer>
         <H1>Create post</H1>
-        <UrlInput type='text' value={url} onChange={(e) => setUrl(e.target.value)}  placeholder='Enter short name for url'/>
-        <PostTextArea type='text' value={post} onChange={(e) => setPost(e.target.value)}  placeholder='Enter post text (with tags i.e. <TXT>, <IMG> etc.)' onKeyUp={closeTag}/>
+        <TitleInput type='text' value={title} onChange={(e) => setTitle(e.target.value)}  placeholder='Enter short title for url'/>
+        <TitleInput type='text' value={longTitle} onChange={(e) => setLongTitle(e.target.value)}  placeholder='Enter long title for text'/>
+        <TitleInput type='text' value={description} onChange={(e) => setDescription(e.target.value)}  placeholder='Enter description for social'/>
+        <TitleInput type='text' value={coverImg} onChange={(e) => setCoverImg(e.target.value)}  placeholder='Enter cover img url'/>
+        <PostTextArea type='text' value={text} onChange={(e) => setText(e.target.value)}  placeholder='Enter post text (with tags i.e. <TXT>, <IMG> etc.)' onKeyUp={closeTag}/>
         <ActionButton onClick={handlePreview}>Preview</ActionButton>
         <ActionButton onClick={handleCreate}>Create</ActionButton>
         {message && <MessageHeader>{message}</MessageHeader>}
         <Example>
-          <ExampleHeader>{'Example of post text: '}</ExampleHeader>
-          <ExampleRow>{'<H1>$NEBL short term setup</H1>'}</ExampleRow>
+          <ExampleHeader>{'Example of tag usage: '}</ExampleHeader>
           <ExampleRow>{'<TXT>Hi traders!</TXT>'}</ExampleRow>
           <ExampleRow>{'<TXT>Showing you my $NEBL short term setup, chart looks ready for breakout try to me.</TXT>'}</ExampleRow>
           <ExampleRow>{'<IMG>https://www.tradingview.com/x/mPjdT0sd/</IMG>'}</ExampleRow>
@@ -108,6 +114,8 @@ const PostPage = () => {
 }
 
 const RootContainer = styled.div`
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 1250px;
   padding: 50px;
@@ -117,7 +125,7 @@ const H1 = styled.h1`
   
 `
 
-const UrlInput = styled.input`
+const TitleInput = styled.input`
   width: 200px;
   height: 25px;
 `
